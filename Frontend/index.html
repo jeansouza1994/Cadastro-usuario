@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Usuários</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Cadastro de Usuários</h1>
+        
+        <form id="userForm">
+            <input type="hidden" id="userId">
+            <div class="form-group">
+                <label for="nome">Nome:</label>
+                <input type="text" id="nome" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-buttons">
+                <button type="submit" id="submitBtn">Cadastrar</button>
+                <button type="button" id="cancelBtn" style="display: none;">Cancelar</button>
+            </div>
+        </form>
+
+        <h2>Buscar Usuário</h2>
+        <form id="searchForm">
+            <div class="search-group">
+                <input type="email" id="searchEmail" placeholder="Digite o email do usuário" required>
+                <button type="submit" class="btn-search">Buscar</button>
+            </div>
+        </form>
+
+        <h2>Resultado</h2>
+        <table id="usersTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Email</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr>
+                    <td colspan="4" style="text-align: center;">Use a busca para visualizar usuários</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
