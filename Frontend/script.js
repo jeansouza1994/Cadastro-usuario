@@ -1,163 +1,163 @@
-const API_URL = 'http://localhost:8080/usuario'; // Ajuste a porta conforme seu backend Spring Boot
+const URL_API = 'http://localhost:8080/usuario';
 
-const form = document.getElementById('userForm');
-const searchForm = document.getElementById('searchForm');
-const tableBody = document.getElementById('tableBody');
-const submitBtn = document.getElementById('submitBtn');
-const cancelBtn = document.getElementById('cancelBtn');
-const userIdInput = document.getElementById('userId');
+const elementos = {
+    formulario: document.getElementById('userForm'),
+    formularioBusca: document.getElementById('searchForm'),
+    corpoTabela: document.getElementById('tableBody'),
+    btnEnviar: document.getElementById('submitBtn'),
+    btnCancelar: document.getElementById('cancelBtn'),
+    campoId: document.getElementById('userId'),
+    campoNome: document.getElementById('nome'),
+    campoEmail: document.getElementById('email'),
+    campoBuscaEmail: document.getElementById('searchEmail')
+};
 
-// Submit do formulário
-form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const userId = userIdInput.value;
-    const userData = {
-        nome: document.getElementById('nome').value,
-        email: document.getElementById('email').value
-    };
+// Utilitários
+const exibirMensagem = (msg, tipo = 'info') => alert(msg);
 
-    if (userId) {
-        await updateUser(userId, userData);
-    } else {
-        await createUser(userData);
-    }
-});
-
-// Buscar usuário por email
-searchForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('searchEmail').value;
-    await searchUser(email);
-});
-
-// Cancelar edição
-cancelBtn.addEventListener('click', resetForm);
-
-// Buscar usuário por email
-async function searchUser(email) {
+const requisicao = async (url, opcoes = {}) => {
     try {
-        const response = await fetch(`${API_URL}?email=${encodeURIComponent(email)}`);
+        return await fetch(url, opcoes);
+    } catch (erro) {
+        console.error('Erro na requisição:', erro);
+        throw erro;
+    }
+};
+
+const obterDadosFormulario = () => ({
+    nome: elementos.campoNome.value.trim(),
+    email: elementos.campoEmail.value.trim()
+});
+
+// Eventos
+elementos.formulario.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = elementos.campoId.value;
+    const dados = obterDadosFormulario();
+    
+    id ? await atualizarUsuario(id, dados) : await criarUsuario(dados);
+});
+
+elementos.formularioBusca.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await buscarUsuario(elementos.campoBuscaEmail.value.trim());
+});
+
+elementos.btnCancelar.addEventListener('click', resetarFormulario);
+
+// Buscar usuário
+async function buscarUsuario(email) {
+    try {
+        const resposta = await requisicao(`${URL_API}?email=${encodeURIComponent(email)}`);
         
-        if (response.ok) {
-            const user = await response.json();
-            displayUsers([user]);
+        if (resposta.ok) {
+            exibirUsuarios([await resposta.json()]);
         } else {
-            alert('Usuário não encontrado');
-            tableBody.innerHTML = '<tr><td colspan="4">Nenhum usuário encontrado</td></tr>';
+            exibirMensagem('Usuário não encontrado');
+            exibirMensagemTabela('Nenhum usuário encontrado');
         }
-    } catch (error) {
-        console.error('Erro ao buscar usuário:', error);
-        alert('Erro ao buscar usuário');
+    } catch (erro) {
+        exibirMensagem('Erro ao buscar usuário');
     }
 }
 
-// Criar novo usuário
-async function createUser(userData) {
+// Criar usuário
+async function criarUsuario(dados) {
     try {
-        const response = await fetch(API_URL, {
+        const resposta = await requisicao(URL_API, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(userData)
+            body: JSON.stringify(dados)
         });
         
-        if (response.ok) {
-            alert('Usuário cadastrado com sucesso!');
-            resetForm();
-            tableBody.innerHTML = '<tr><td colspan="4">Use a busca para visualizar usuários</td></tr>';
+        if (resposta.ok) {
+            exibirMensagem('Usuário cadastrado com sucesso!');
+            resetarFormulario();
+            exibirMensagemTabela('Use a busca para visualizar usuários');
         } else {
-            alert('Erro ao cadastrar usuário');
+            exibirMensagem('Erro ao cadastrar usuário');
         }
-    } catch (error) {
-        console.error('Erro:', error);
-        alert('Erro ao cadastrar usuário');
+    } catch (erro) {
+        exibirMensagem('Erro ao cadastrar usuário');
     }
 }
 
 // Atualizar usuário
-async function updateUser(id, userData) {
+async function atualizarUsuario(id, dados) {
     try {
-        const response = await fetch(`${API_URL}?id=${id}`, {
+        const resposta = await requisicao(`${URL_API}?id=${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(userData)
+            body: JSON.stringify(dados)
         });
         
-        if (response.ok) {
-            alert('Usuário atualizado com sucesso!');
-            resetForm();
-            // Buscar novamente o usuário atualizado
-            await searchUser(userData.email);
+        if (resposta.ok) {
+            exibirMensagem('Usuário atualizado com sucesso!');
+            resetarFormulario();
+            await buscarUsuario(dados.email);
         } else {
-            alert('Erro ao atualizar usuário');
+            exibirMensagem('Erro ao atualizar usuário');
         }
-    } catch (error) {
-        console.error('Erro:', error);
-        alert('Erro ao atualizar usuário');
+    } catch (erro) {
+        exibirMensagem('Erro ao atualizar usuário');
     }
 }
 
 // Deletar usuário
-async function deleteUser(email) {
+async function deletarUsuario(email) {
     if (!confirm('Deseja realmente deletar este usuário?')) return;
     
     try {
-        const response = await fetch(`${API_URL}?email=${encodeURIComponent(email)}`, {
+        const resposta = await requisicao(`${URL_API}?email=${encodeURIComponent(email)}`, {
             method: 'DELETE'
         });
         
-        if (response.ok) {
-            alert('Usuário deletado com sucesso!');
-            tableBody.innerHTML = '<tr><td colspan="4">Usuário deletado. Use a busca para visualizar outros usuários</td></tr>';
+        if (resposta.ok) {
+            exibirMensagem('Usuário deletado com sucesso!');
+            exibirMensagemTabela('Usuário deletado. Use a busca para visualizar outros');
         } else {
-            alert('Erro ao deletar usuário');
+            exibirMensagem('Erro ao deletar usuário');
         }
-    } catch (error) {
-        console.error('Erro:', error);
-        alert('Erro ao deletar usuário');
+    } catch (erro) {
+        exibirMensagem('Erro ao deletar usuário');
     }
 }
 
 // Editar usuário
-function editUser(user) {
-    userIdInput.value = user.id;
-    document.getElementById('nome').value = user.nome;
-    document.getElementById('email').value = user.email;
-    
-    submitBtn.textContent = 'Atualizar';
-    cancelBtn.style.display = 'inline-block';
-    
-    // Scroll para o formulário
-    form.scrollIntoView({ behavior: 'smooth' });
+function editarUsuario(usuario) {
+    elementos.campoId.value = usuario.id;
+    elementos.campoNome.value = usuario.nome;
+    elementos.campoEmail.value = usuario.email;
+    elementos.btnEnviar.textContent = 'Atualizar';
+    elementos.btnCancelar.style.display = 'inline-block';
+    elementos.formulario.scrollIntoView({ behavior: 'smooth' });
 }
 
-// Exibir usuários na tabela
-function displayUsers(users) {
-    tableBody.innerHTML = '';
-    
-    if (!Array.isArray(users)) {
-        users = [users];
-    }
-    
-    users.forEach(user => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${user.id || 'N/A'}</td>
-            <td>${user.nome}</td>
-            <td>${user.email}</td>
-            <td class="actions">
-                <button class="btn-edit" onclick='editUser(${JSON.stringify(user)})'>Editar</button>
-                <button class="btn-delete" onclick="deleteUser('${user.email}')">Deletar</button>
-            </td>
-        `;
-        tableBody.appendChild(row);
-    });
+// Exibir mensagem na tabela
+const exibirMensagemTabela = (mensagem) => {
+    elementos.corpoTabela.innerHTML = `<tr><td colspan="4">${mensagem}</td></tr>`;
+};
+
+// Exibir usuários
+function exibirUsuarios(usuarios) {
+    elementos.corpoTabela.innerHTML = (Array.isArray(usuarios) ? usuarios : [usuarios])
+        .map(u => `
+            <tr>
+                <td>${u.id || 'N/A'}</td>
+                <td>${u.nome}</td>
+                <td>${u.email}</td>
+                <td class="actions">
+                    <button class="btn-edit" onclick='editarUsuario(${JSON.stringify(u)})'>Editar</button>
+                    <button class="btn-delete" onclick="deletarUsuario('${u.email}')">Deletar</button>
+                </td>
+            </tr>
+        `).join('');
 }
 
 // Resetar formulário
-function resetForm() {
-    form.reset();
-    userIdInput.value = '';
-    submitBtn.textContent = 'Cadastrar';
-    cancelBtn.style.display = 'none';
+function resetarFormulario() {
+    elementos.formulario.reset();
+    elementos.campoId.value = '';
+    elementos.btnEnviar.textContent = 'Cadastrar';
+    elementos.btnCancelar.style.display = 'none';
 }
